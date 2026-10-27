@@ -355,7 +355,6 @@ Documentación en `docs/`:
 | `Guia_de_estudio_Dashboard360.md` | Proceso completo de desarrollo: pasos, comandos, código explicado, errores y glosario |
 | `Referencia_rapida_Dashboard360.md` | Comandos, reglas, cifras y preguntas de defensa |
 | `Guia_desarrollo_Dashboard_360_Olist.docx` | Guía de desarrollo del tema |
-| `archivo_anterior/` | Registro original por etapa (`01` a `07`) y el README anterior, conservados como evidencia |
 
 ### Cómo creció el proyecto por unidad
 
@@ -478,4 +477,4 @@ git push                      # sube los cambios a GitHub
 
 La presentación de 15 minutos más 5 de preguntas está en `docs/presentacion/Dashboard360_presentacion.pptx`, basada en la plantilla del curso. Sigue el orden: problema de negocio, datos, arquitectura, demo, resultados, calidad y buenas prácticas, valor de negocio y aprendizajes. Ambos integrantes presentan. Las capturas del dashboard, útiles como respaldo de la demo, están en `docs/presentacion/capturas/`.
 
-Uso de IA: se usó Codex en VS Code como asistente para escribir código, y Claude para revisar el sistema, desarrollar la presentación y hacer pequeñas correcciones en la documentación. Las instalaciones, las ejecuciones y la verificación de los resultados las hizo el estudiante a mano, comparando cada resultado con lo esperado (por ejemplo, la repetición del pipeline con hashes). Cada etapa quedó documentada en `docs/` (guía de estudio) y en `docs/archivo_anterior/` (registro original).
+Uso de IA: se usó Codex en VS Code como asistente para escribir código, y Claude para revisar el sistema, desarrollar la presentación y hacer pequeñas correcciones en la documentación. Las instalaciones, las ejecuciones y la verificación de los resultados las hizo el estudiante a mano, comparando cada resultado con lo esperado (por ejemplo, la repetición del pipeline con hashes). Cada etapa quedó documentada en `docs/` (guía de estudio).

@@ -2,7 +2,7 @@
 
 Proyecto integrador del curso DPL1046, Diplomado en Ingeniería de Datos con Python (UDLA). Tema 10: Dashboard 360 del negocio.
 
-**Para qué sirve este documento.** Reúne en un solo lugar, en orden cronológico, los pasos, comandos y código del proyecto, con la explicación de por qué se hizo cada cosa. Sirve para estudiar en lugar de leer `docs/01` a `docs/06`; esos archivos se conservan sin cambios en `docs/archivo_anterior/` como evidencia original.
+**Para qué sirve este documento.** Reúne en un solo lugar, en orden cronológico, los pasos, comandos y código del proyecto, con la explicación de por qué se hizo cada cosa. Sirve para estudiar en lugar de leer `docs/01` a `docs/06`; su contenido está integrado en esta guía.
 
 **Cómo estudiarlo.** Lee una fase, cierra el documento e intenta explicarla en voz alta con tus palabras. Luego abre el código real y comprueba. Las preguntas de defensa están en `Referencia_rapida_Dashboard360.md`.
 
@@ -2154,8 +2154,8 @@ Las descargas usan `utf-8-sig` para que Excel abra bien los acentos.
 
 ## 9. Fase 8: README, revisión y presentación
 
-1. **README.md.** Debe explicar el caso, qué hace, cómo instalar, cómo ejecutar, salida de `pytest -v`, estructura, limitaciones y uso de IA. La versión anterior está respaldada en `docs/archivo_anterior/README_anterior.md`.
-2. **Revisión contra los requisitos** (`docs/archivo_anterior/07_revision_requisitos.md`). Compara el proyecto con la rúbrica: Funcionalidad 35 %, Calidad del código 30 %, Buenas prácticas 15 %, Presentación y valor de negocio 20 %. No es un paso de desarrollo; es una auditoría.
+1. **README.md.** Debe explicar el caso, qué hace, cómo instalar, cómo ejecutar, salida de `pytest -v`, estructura, limitaciones y uso de IA.
+2. **Revisión contra los requisitos** (documento de revisión). Compara el proyecto con la rúbrica: Funcionalidad 35 %, Calidad del código 30 %, Buenas prácticas 15 %, Presentación y valor de negocio 20 %. No es un paso de desarrollo; es una auditoría.
 3. **Presentación** (`docs/presentacion/Dashboard360_presentacion.pptx`): 15 minutos más 5 de preguntas, con la plantilla del curso (9 diapositivas base). Pendiente por el estudiante: nombres de los integrantes y fecha en la portada.
 4. **Ejecución de verificación.** El pipeline se ejecutó de nuevo en una copia aparte: terminó con "Pipeline completado correctamente", los indicadores fueron idénticos, las ocho tablas tuvieron las mismas filas, la integridad de SQLite fue `ok`, las 9 pruebas pasaron y las tres pestañas del dashboard cargaron sin excepciones.
 
@@ -2239,7 +2239,7 @@ Al abrir una terminal nueva solo hace falta `source .venv/Scripts/activate` y el
 
 Para que sepas qué cubre esta guía y qué sigue siendo tu tarea:
 
-| Hueco en `docs/archivo_anterior/01`–`06` | Cómo se cubre aquí |
+| Hueco en los documentos originales `01`–`06` | Cómo se cubre aquí |
 |---|---|
 | No incluyen el código de `etl.py`, `indicadores.py`, `contexto.py` ni `pipeline.py`: solo describen lo que hacen | Fases 2 a 5 con el código literal, por bloques |
 | No hay ninguna etapa sobre `dashboard.py` | Fase 7 explica el código final. **El orden real en que lo escribiste no está registrado:** añádelo tú |
