@@ -1,0 +1,6 @@
+{
+  "logging": {
+    "level": "INFO",
+    "file": "reports/pipeline.log"
+  }
+}

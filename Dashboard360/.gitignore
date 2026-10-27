@@ -1,0 +1,23 @@
+# Entornos virtuales
+.venv/
+.venv-python314-respaldo/
+
+# Archivos temporales de Python
+__pycache__/
+*.py[cod]
+
+# Cache de pruebas
+.pytest_cache/
+
+# Secretos locales
+.env
+
+# Resultados generados
+data/processed/*
+reports/*
+
+# Datos originales del curso (no se suben)
+data/raw/*.csv
+
+# Temporales de Office
+~$*
