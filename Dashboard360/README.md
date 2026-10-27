@@ -389,36 +389,38 @@ Checklist de entrega del profesor:
 
 Repositorio: <https://github.com/Favio-Richar/ProyectoDiplomadoPython.git>
 
-Los comandos se ejecutan en Git Bash, desde la raíz del proyecto. El repositorio **no incluye** los CSV originales (`data/raw/*.csv`), el entorno virtual (`.venv/`), la base generada (`data/processed/`) ni los reportes (`reports/`); están en `.gitignore`. Los resultados se regeneran con `python pipeline.py`.
+Los comandos se ejecutan en Git Bash. El repositorio guarda la carpeta `Dashboard360/` dentro de `ProyectoDiplomadoPython/`. **No incluye** los CSV originales (`data/raw/*.csv`), el entorno virtual (`.venv/`), la base generada (`data/processed/`) ni los reportes (`reports/`); están en `.gitignore`. Los resultados se regeneran con `python pipeline.py`.
 
 ### Subir el proyecto por primera vez
 
+Desde la carpeta `ProyectoDiplomadoPython/` (la que contiene `Dashboard360/`):
+
 ```bash
-git init
-git branch -M main
-git add .
-git status
-git commit -m "Dashboard 360 de Olist: pipeline, dashboard, pruebas y documentación"
-git remote add origin https://github.com/Favio-Richar/ProyectoDiplomadoPython.git
-git push -u origin main
+git init                      # convierte la carpeta en un repositorio
+git branch -M main            # nombra la rama principal "main"
+git add .                     # prepara todos los archivos (menos los del .gitignore)
+git status                    # muestra qué se va a subir
+git commit -m "Dashboard 360 de Olist: pipeline, dashboard, pruebas y documentación"   # guarda una versión con un mensaje
+git remote add origin https://github.com/Favio-Richar/ProyectoDiplomadoPython.git      # enlaza con el repositorio de GitHub
+git push -u origin main       # sube la rama main a GitHub
 ```
 
 Antes del `commit`, `git status` no debe mostrar `.venv/`, `data/processed/` ni `reports/`. Si es la primera vez que se usa Git en el computador, se configura la identidad:
 
 ```bash
-git config --global user.name "Nombre Apellido"
-git config --global user.email "correo@ejemplo.com"
+git config --global user.name "Nombre Apellido"          # nombre que aparece en los commits
+git config --global user.email "correo@ejemplo.com"      # correo que aparece en los commits
 ```
 
 ### Clonar en otro computador
 
 ```bash
-git clone https://github.com/Favio-Richar/ProyectoDiplomadoPython.git Dashboard360
-cd Dashboard360
-py -3.12 -m venv .venv
-source .venv/Scripts/activate
-python -m pip install -r requirements.txt
-mkdir -p data/raw
+git clone https://github.com/Favio-Richar/ProyectoDiplomadoPython.git   # descarga el repositorio
+cd ProyectoDiplomadoPython/Dashboard360                  # entra a la carpeta del proyecto
+py -3.12 -m venv .venv                                   # crea el entorno virtual
+source .venv/Scripts/activate                            # activa el entorno
+python -m pip install -r requirements.txt                # instala las dependencias
+mkdir -p data/raw                                        # crea la carpeta de datos
 ```
 
 Después se copian los nueve CSV del curso a `data/raw/` y se ejecuta `python pipeline.py`.
@@ -428,16 +430,16 @@ Después se copian los nueve CSV del curso a `data/raw/` y se ejecuta `python pi
 Traer los cambios publicados:
 
 ```bash
-git pull
+git pull                      # descarga y une los cambios de GitHub
 ```
 
 Subir cambios nuevos:
 
 ```bash
-git status
-git add .
-git commit -m "Descripción breve del cambio"
-git push
+git status                    # muestra qué archivos cambiaron
+git add .                     # prepara los cambios
+git commit -m "Descripción breve del cambio"   # guarda una versión con un mensaje
+git push                      # sube los cambios a GitHub
 ```
 
 ## Solución de problemas
