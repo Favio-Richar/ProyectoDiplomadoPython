@@ -2065,13 +2065,13 @@ def main():
 
 | Pestaña | Contenido |
 |---|---|
-| **Resumen ejecutivo** | 5 indicadores; evolución mensual del GMV; categorías con más ventas (selector 5/10/15); tabla y descarga del resumen mensual; los 10 vendedores con más ventas |
+| **Resumen ejecutivo** | 5 indicadores; evolución mensual del GMV; categorías con más ventas (selector 5/10/15); distribución de la satisfacción (puntaje 1 a 5); entregas a tiempo por mes (se omiten meses con menos de 30 pedidos evaluables); tabla y descarga del resumen mensual; los 10 vendedores con más ventas |
 | **Explorar pedidos** | Filtros por rango de meses y estado del cliente; los indicadores **se recalculan** con la selección; ventas por estado (gráfico, tabla y descarga). El resumen ejecutivo **no** cambia con estos filtros |
 | **Calidad y definiciones** | Controles (sin reseña, no evaluables, sin pago, sin coordenadas, diferencias de pago) y cómo se interpreta cada indicador |
 
 Fragmento de los filtros de la pestaña de exploración:
 
-*`dashboard.py`, líneas 260–325*
+*`dashboard.py`, líneas 316–381*
 
 ```python
     # Los filtros de esta pestaña afectan solo a su contenido.

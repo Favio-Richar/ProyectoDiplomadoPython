@@ -231,6 +231,62 @@ def main():
                 width="stretch",
             )
 
+        izquierda_2, derecha_2 = st.columns(2)
+
+        with izquierda_2:
+            st.subheader("Distribución de la satisfacción")
+            # Se redondea hacia arriba desde 0,5 para agrupar en 1 a 5.
+            puntajes = (
+                (pedidos["satisfaccion"].dropna() + 0.5)
+                .astype(int)
+                .value_counts()
+                .reindex(range(1, 6), fill_value=0)
+                .rename_axis("puntaje")
+                .reset_index(name="pedidos")
+            )
+            st.altair_chart(
+                alt.Chart(puntajes)
+                .mark_bar(color="#1E40AF")
+                .encode(
+                    x=alt.X(
+                        "puntaje:O",
+                        title="Puntaje por pedido (redondeado)",
+                        axis=alt.Axis(labelAngle=0),
+                    ),
+                    y=alt.Y("pedidos:Q", title="Pedidos con reseña"),
+                    tooltip=[
+                        alt.Tooltip("puntaje:O", title="Puntaje"),
+                        alt.Tooltip(
+                            "pedidos:Q",
+                            title="Pedidos",
+                            format=",.0f",
+                        ),
+                    ],
+                )
+                .properties(height=340),
+                width="stretch",
+            )
+            st.caption(
+                "Pedidos entregados con reseña, agrupados por puntaje "
+                "medio del pedido."
+            )
+
+        with derecha_2:
+            st.subheader("Entregas a tiempo por mes")
+            evaluables = pedidos.dropna(subset=["entrega_a_tiempo"])
+            puntualidad = evaluables.groupby("mes_compra").agg(
+                evaluables=("entrega_a_tiempo", "size"),
+                porcentaje=("entrega_a_tiempo", "mean"),
+            )
+            # Los meses con muy pocos pedidos distorsionan el porcentaje.
+            puntualidad = puntualidad.loc[puntualidad["evaluables"] >= 30]
+            puntualidad["porcentaje"] = puntualidad["porcentaje"] * 100
+            st.line_chart(puntualidad[["porcentaje"]], height=340)
+            st.caption(
+                "Porcentaje de pedidos entregados en la fecha estimada o "
+                "antes. Se omiten meses con menos de 30 pedidos evaluables."
+            )
+
         st.subheader("Resumen mensual")
         st.dataframe(mensual, hide_index=True)
 

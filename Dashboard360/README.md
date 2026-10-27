@@ -201,7 +201,7 @@ python -m streamlit run dashboard.py
 
 El dashboard tiene tres pestañas:
 
-- **Resumen ejecutivo:** los cinco indicadores, evolución mensual del GMV, categorías con mayores ventas (5, 10 o 15), resumen mensual descargable y vendedores con mayores ventas.
+- **Resumen ejecutivo:** los cinco indicadores, evolución mensual del GMV, categorías con mayores ventas (5, 10 o 15), distribución de la satisfacción por puntaje, entregas a tiempo por mes, resumen mensual descargable y vendedores con mayores ventas.
 - **Explorar pedidos:** filtros por rango de meses y estado del cliente; los indicadores se recalculan con la selección. Los filtros afectan solo esta pestaña.
 - **Calidad y definiciones:** controles de cobertura (pedidos sin reseña, entregas no evaluables, sin pago, sin coordenadas, diferencias de pago) y cómo se interpreta cada indicador.
 
