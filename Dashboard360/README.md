@@ -37,6 +37,20 @@ puntualidad y atacar primero los atrasos de más de 10 días.
 | Atrasos y satisfacción | A tiempo 4,29 → más de 10 días de atraso 1,71 |
 | Dónde se atrasa más | AL (78,59 %), MA (82,57 %), SE (84,78 %) |
 
+## Datos de entrada (`data/raw/`)
+
+Los CSV de Olist **no se suben a git** (son pesados y están en `.gitignore`).
+Para ejecutar el proyecto hay que ponerlos a mano:
+
+1. Dentro de `Dashboard360/`, crear la carpeta `data/raw/`:
+   `mkdir -p data/raw`
+2. Del repositorio del profesor (`diplomado-idsdata-juanmarozas`), copiar el
+   contenido de su carpeta `data/raw/` y pegarlo en `Dashboard360/data/raw/`:
+   `cp <ruta-del-repo-del-profesor>/data/raw/*.csv data/raw/`
+
+La carpeta tiene 9 archivos CSV; este pipeline usa 6: pedidos, ítems,
+reseñas, clientes, productos y traducción de categorías.
+
 ## Cómo ejecutarlo
 
 Siempre desde la carpeta del proyecto (`Dashboard360`), con el entorno

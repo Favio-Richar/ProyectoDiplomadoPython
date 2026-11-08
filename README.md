@@ -81,7 +81,7 @@ flowchart LR
 
 ## Cómo ejecutarlo
 
-Los comandos se ejecutan en Git Bash. Los CSV originales del curso no están en el repositorio: se colocan en `Dashboard360/data/raw/`.
+Los comandos se ejecutan en Git Bash. Los CSV de Olist **no están en el repositorio**: hay que copiarlos desde el repo del profesor (`diplomado-idsdata-juanmarozas/data/raw/`) a la carpeta `Dashboard360/data/raw/` (el comando de copia está abajo; usa la ruta donde tengas ese repo).
 
 ```bash
 git clone https://github.com/Favio-Richar/ProyectoDiplomadoPython.git   # descarga el repositorio
@@ -90,7 +90,8 @@ py -3.12 -m venv .venv                                   # crea el entorno virtu
 source .venv/Scripts/activate                            # activa el entorno
 python -m pip install -r requirements.txt                # instala las dependencias
 cp .env.example .env                                     # crea la configuración local (URL de la API)
-mkdir -p data/raw                                        # crea la carpeta de datos (luego copia los CSV)
+mkdir -p data/raw                                        # crea la carpeta de datos
+cp <ruta-del-repo-del-profesor>/data/raw/*.csv data/raw/ # copia los CSV del repo del profesor
 python pipeline.py                                       # ejecuta el pipeline completo
 pytest -v                                                # ejecuta las 22 pruebas
 ```
@@ -101,6 +102,26 @@ pytest -v                                                # ejecuta las 22 prueba
 - ✅ **Validación y manejo de errores:** `try/except` y registro con `logging`.
 - ✅ **Idempotente:** ejecutarlo dos veces da el mismo resultado, sin duplicar filas.
 - ✅ **Sin claves en el código:** la configuración va en `.env`, que no se sube a git.
+
+## Primera vez y cómo traer los cambios del compañero
+
+**Primera vez (aún no tienes el proyecto):** se usa `git clone`, una sola vez, desde la carpeta donde quieras guardarlo (por ejemplo, tu carpeta de usuario `~`). Los comandos de "Cómo ejecutarlo" ya lo incluyen. Esto crea la carpeta `ProyectoDiplomadoPython`.
+
+**Cuando ya tienes el proyecto:** se usa `git pull`, cada vez que el compañero haya subido cambios. Reglas para que funcione:
+
+- **Dónde ejecutarlo:** dentro de la carpeta del repositorio, es decir, en `ProyectoDiplomadoPython/` (la carpeta que contiene `.git`). `Dashboard360/` también sirve porque está dentro, pero la carpeta correcta es la de la raíz.
+- **Con qué programa:** Git Bash, abierto en esa carpeta (clic derecho en la carpeta, "Open Git Bash here", o `cd ~/ProyectoDiplomadoPython`).
+- **Antes de hacer `git pull`:** conviene que no tengas cambios sin guardar. Revisa con `git status`; si hay archivos modificados, haz primero `git add`, `git commit` y luego `git pull`.
+- **Comprobar que funcionó:** `git log --oneline` muestra los últimos cambios y `git status` debe decir `Your branch is up to date with 'origin/main'`.
+
+```bash
+cd ~/ProyectoDiplomadoPython      # entra a la carpeta del repositorio (la raíz, donde está .git)
+git status                        # revisa que no haya cambios sin guardar
+git pull                          # descarga y une los cambios que subió el compañero
+git log --oneline                 # confirma los últimos cambios recibidos
+```
+
+**El repo del profesor (`diplomado-idsdata-juanmarozas`)** es otro repositorio, aparte de este. Si el profesor actualiza sus datos, se hace `git pull` **dentro de su carpeta** (`cd <ruta-del-repo-del-profesor>`), nunca dentro de la carpeta de este proyecto. Después se vuelve a copiar `data/raw/` como se explica en "Cómo ejecutarlo". Ese repo es solo de lectura: no se modifica ni se sube nada a él.
 
 ## Actualizar el repositorio
 
