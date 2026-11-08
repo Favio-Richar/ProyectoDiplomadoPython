@@ -21,3 +21,6 @@ data/raw/*.csv
 
 # Temporales de Office
 ~$*
+
+# Resultados del pipeline (se regeneran al ejecutar)
+salida/

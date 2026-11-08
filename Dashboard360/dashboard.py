@@ -1,423 +1,166 @@
-"""Dashboard ejecutivo sobre los resultados preparados en SQLite."""
+"""
+Dashboard 360 interactivo (archivo salida/dashboard.html).
 
-import sqlite3
-from pathlib import Path
+Negocio: el gerente comercial necesita ver en una sola pantalla cómo va el
+negocio y dónde actuar primero. Pasando el mouse ve el detalle de cada
+barra, puede hacer zoom y elegir cuántos estados mostrar.
 
-import altair as alt
-import pandas as pd
-import streamlit as st
+Es una página web que se abre con doble clic: no necesita servidor, ni
+internet, ni otro comando. La crea pipeline.py al terminar.
+"""
 
+import logging
 
-# Configuración general de la página.
-st.set_page_config(
-    page_title="Dashboard 360 | Olist",
-    layout="wide",
-)
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
-RAIZ = Path(__file__).resolve().parent
-RUTA_BASE = RAIZ / "data" / "processed" / "dashboard360.sqlite"
-
-
-def numero(valor, decimales=0):
-    """Presenta números con separadores habituales en español."""
-    if pd.isna(valor):
-        return "Sin datos"
-
-    texto = f"{valor:,.{decimales}f}"
-    return texto.replace(",", "X").replace(".", ",").replace("X", ".")
+# Colores: gris para lo normal, color para lo que importa
+GRIS, AZUL, ROJO = "#c5cbd3", "#2b6cb0", "#d1495b"
+TRAMOS_COLOR = ["#2f9e6f", "#e9c46a", "#f4a261", "#d1495b"]
+TEXTO = "#1f2a44"
 
 
-@st.cache_data(max_entries=2, show_spinner="Cargando resultados...")
-def cargar_datos(ruta, version):
-    """Lee una instantánea de resultados sin modificar SQLite."""
-    # version contiene la fecha de modificación del archivo:
-    # cuando cambia la base, cambia la clave de la caché.
-    tablas = [
-        "pedidos_dashboard",
-        "resumen_mensual",
-        "ventas_categorias",
-        "vendedores_dashboard",
+def tarjeta(titulo, valor, sufijo, formato):
+    """Una tarjeta de indicador: un número grande con su título."""
+    return go.Indicator(
+        mode="number", value=valor,
+        title={"text": titulo, "font": {"size": 16}},
+        number={"font": {"size": 38}, "suffix": sufijo,
+                "valueformat": formato},
+    )
+
+
+def tarjetas(indicadores):
+    """Las 4 tarjetas de arriba: los indicadores principales."""
+    kpi = dict(zip(indicadores["indicador"], indicadores["valor"]))
+    return [
+        tarjeta("Ventas", kpi["ventas_totales_brl"] / 1e6, " M BRL", ",.1f"),
+        tarjeta("Ticket promedio", kpi["ticket_promedio_brl"], " BRL", ",.0f"),
+        tarjeta("Satisfacción", kpi["satisfaccion_promedio"], " de 5", ".2f"),
+        tarjeta("Entregas a tiempo", kpi["entregas_a_tiempo_pct"], " %",
+                ".1f"),
     ]
 
-    with sqlite3.connect(
-        Path(ruta).resolve().as_uri() + "?mode=ro",
-        uri=True,
-    ) as conexion:
-        # Las consultas comparten una misma instantánea de lectura.
-        conexion.execute("BEGIN")
 
-        resultados = {
-            tabla: pd.read_sql_query(
-                f"SELECT * FROM {tabla}",
-                conexion,
-            )
-            for tabla in tablas
-        }
-
-    return resultados
-
-
-def mostrar_indicadores(pedidos):
-    """Muestra métricas calculadas sobre la población recibida."""
-    cantidad = len(pedidos)
-    gmv = pedidos["gmv"].sum()
-    satisfaccion = pedidos["satisfaccion"].mean()
-
-    # Los valores nulos se excluyen del denominador de entregas.
-    entregas = pedidos["entrega_a_tiempo"].dropna()
-    porcentaje = entregas.mean() * 100 if len(entregas) else None
-
-    columnas = st.columns(5)
-
-    columnas[0].metric(
-        "GMV sin flete",
-        numero(gmv),
-        help=f"Importe completo: {numero(gmv, 2)}",
-        border=True,
-    )
-    columnas[1].metric(
-        "Ticket promedio",
-        numero(gmv / cantidad, 2),
-        help="GMV dividido por pedidos de esta selección.",
-        border=True,
-    )
-    columnas[2].metric(
-        "Satisfacción",
-        f"{numero(satisfaccion, 2)} / 5"
-        if pd.notna(satisfaccion)
-        else "Sin datos",
-        border=True,
-    )
-    columnas[3].metric(
-        "Entregas a tiempo",
-        f"{numero(porcentaje, 2)} %"
-        if porcentaje is not None
-        else "Sin datos",
-        border=True,
-    )
-    columnas[4].metric(
-        "Pedidos entregados",
-        numero(cantidad),
-        border=True,
-    )
-
-    con_resena = int(pedidos["satisfaccion"].notna().sum())
-
-    st.caption(
-        f"Satisfacción: {numero(con_resena)} pedidos con reseña. "
-        f"Entregas a tiempo: {numero(len(entregas))} pedidos evaluables."
+def barras_estados(por_estado, cuantos):
+    """Barras de los estados con peor puntualidad (los 3 peores en rojo)."""
+    datos = por_estado.head(cuantos)
+    colores = [ROJO] * 3 + [GRIS] * (len(datos) - 3)
+    return go.Bar(
+        x=datos["a_tiempo_pct"], y=datos["customer_state"],
+        orientation="h", marker_color=colores, visible=False,
+        text=datos["a_tiempo_pct"].map("{:.1f} %".format),
+        customdata=datos[["pedidos", "atrasados"]],
+        hovertemplate=("<b>%{y}</b><br>A tiempo: %{x:.1f} %<br>"
+                       "Pedidos: %{customdata[0]}<br>"
+                       "Atrasados: %{customdata[1]}<extra></extra>"),
     )
 
 
-def grafico_barras(datos, categoria, valor, titulo_valor):
-    """Construye barras horizontales ordenadas por valor."""
+def recuadro(texto, y, color_fondo):
+    """Un recuadro de texto ocupando todo el ancho (arriba o abajo)."""
+    return {
+        "text": texto, "xref": "paper", "yref": "paper", "x": 0, "y": y,
+        "xanchor": "left", "yanchor": "top", "showarrow": False,
+        "align": "left", "bgcolor": color_fondo, "borderpad": 10,
+        "font": {"size": 14, "color": TEXTO},
+    }
+
+
+def texto_decision(por_atraso, por_estado):
+    """La decisión para el gerente, calculada con los resultados."""
+    peores = ", ".join(por_estado.head(3)["customer_state"])
+    mejor = por_atraso["nota_promedio"].iloc[0]
+    peor = por_atraso["nota_promedio"].iloc[-1]
     return (
-        alt.Chart(datos)
-        .mark_bar(color="#1E40AF")
-        .encode(
-            x=alt.X(f"{valor}:Q", title=titulo_valor),
-            y=alt.Y(
-                f"{categoria}:N",
-                sort="-x",
-                title=None,
-            ),
-            tooltip=[
-                alt.Tooltip(f"{categoria}:N", title="Grupo"),
-                alt.Tooltip(
-                    f"{valor}:Q",
-                    title=titulo_valor,
-                    format=",.2f",
-                ),
-            ],
-        )
-        .properties(height=340)
+        "<b>Decisión que permite:</b> "
+        f"1) Atacar primero los atrasos de más de 10 días: la nota baja de "
+        f"{mejor} a {peor}.  "
+        f"2) Revisar primero la logística en <b>{peores}</b>, los estados "
+        "con peor puntualidad."
     )
 
 
-def main():
-    """Organiza las vistas ejecutiva, exploratoria y de calidad."""
-    st.title("Dashboard 360")
-    st.write("Ventas, satisfacción y entregas de Olist.")
-
-    if not RUTA_BASE.is_file():
-        st.error(
-            "No se encontró la base de resultados. "
-            "Ejecuta primero: python pipeline.py"
-        )
-        st.stop()
-
-    st.sidebar.header("Resultados del negocio")
-    st.sidebar.caption(
-        "Datos históricos. Los indicadores comerciales incluyen "
-        "exclusivamente pedidos entregados."
+def crear_dashboard(indicadores, categorias, por_atraso, por_estado, carpeta):
+    """Arma el dashboard (tarjetas + 3 gráficos) y lo guarda como HTML."""
+    columnas = [{"type": "domain", "colspan": 3}, None, None] * 4
+    figura = make_subplots(
+        rows=2, cols=12, row_heights=[0.16, 0.84],
+        vertical_spacing=0.16, horizontal_spacing=0.04,
+        specs=[columnas, [{"colspan": 4}, None, None, None,
+                          {"colspan": 4}, None, None, None,
+                          {"colspan": 4}, None, None, None]],
+        subplot_titles=[""] * 4 + [
+            f"<b>1 · {categorias['categoria'].iloc[0]} lidera las ventas</b>",
+            "<b>2 · Más atraso en la entrega, más baja la nota</b>",
+            "<b>3 · Estados con peor puntualidad</b>",
+        ],
     )
+    for i, tarjeta in enumerate(tarjetas(indicadores)):
+        figura.add_trace(tarjeta, row=1, col=1 + i * 3)
 
-    if st.sidebar.button("Actualizar datos"):
-        cargar_datos.clear()
+    # Gráfico 1: categorías que más venden (las 3 primeras en azul)
+    colores = [AZUL] * 3 + [GRIS] * (len(categorias) - 3)
+    figura.add_trace(go.Bar(
+        x=categorias["ventas_brl"], y=categorias["categoria"],
+        orientation="h", marker_color=colores,
+        customdata=categorias["unidades"],
+        hovertemplate=("<b>%{y}</b><br>Ventas: %{x:,.0f} BRL<br>"
+                       "Unidades: %{customdata:,}<extra></extra>"),
+    ), row=2, col=1)
 
-    try:
-        datos = cargar_datos(
-            str(RUTA_BASE),
-            RUTA_BASE.stat().st_mtime_ns,
-        )
-    except (sqlite3.Error, pd.errors.DatabaseError) as error:
-        st.error(
-            "No se pudieron leer las tablas. "
-            "Ejecuta python pipeline.py para generar los resultados."
-        )
-        with st.expander("Detalle del error"):
-            st.code(str(error))
-        st.stop()
+    # Gráfico 2 (hallazgo 2): la nota según los días de atraso
+    figura.add_trace(go.Bar(
+        x=por_atraso["tramo"], y=por_atraso["nota_promedio"],
+        marker_color=TRAMOS_COLOR, text=por_atraso["nota_promedio"],
+        customdata=por_atraso["pedidos"],
+        hovertemplate=("<b>%{x}</b><br>Nota: %{y}<br>"
+                       "Pedidos: %{customdata:,}<extra></extra>"),
+    ), row=2, col=5)
 
-    pedidos = datos["pedidos_dashboard"]
-    mensual = datos["resumen_mensual"].sort_values("mes_compra")
-    categorias = datos["ventas_categorias"].sort_values(
-        "gmv",
-        ascending=False,
+    # Gráfico 3 (hallazgo 3): estados; el botón elige cuántos mostrar
+    opciones = [("Peores 5", 5), ("Peores 10", 10), ("Todos", len(por_estado))]
+    for _, cuantos in opciones:
+        figura.add_trace(barras_estados(por_estado, cuantos), row=2, col=9)
+    total = len(figura.data)
+    botones = []
+    for i, (nombre, _) in enumerate(opciones):
+        visibles = [True] * (total - 3) + [j == i for j in range(3)]
+        botones.append({"label": nombre, "method": "update",
+                        "args": [{"visible": visibles}]})
+    figura.data[total - 2].visible = True  # empieza con "Peores 10"
+
+    figura.update_yaxes(autorange="reversed", row=2, col=1)
+    figura.update_yaxes(autorange="reversed", row=2, col=9)
+    figura.update_yaxes(dtick=1, row=2, col=9)  # muestra todos los estados
+    figura.update_yaxes(range=[0, 5], row=2, col=5)
+    figura.update_xaxes(title_text="Ventas (BRL)", row=2, col=1)
+    figura.update_xaxes(range=[0, 112], title_text="Entregas a tiempo (%)",
+                        row=2, col=9)
+    encabezado = (
+        "<b>Pregunta:</b> ¿Cómo va el negocio y dónde conviene actuar "
+        "primero?   <b>Para quién:</b> el gerente comercial.<br>"
+        "<b>Por qué importa:</b> sin una vista única, los problemas de "
+        "entrega se descubren tarde, cuando el cliente ya dejó una mala "
+        "reseña."
     )
-    vendedores = datos["vendedores_dashboard"].sort_values(
-        "gmv",
-        ascending=False,
+    figura.update_layout(
+        title={"text": "<b>Dashboard 360 · Olist</b>", "x": 0.01, "y": 0.97},
+        template="plotly_white", showlegend=False, height=860,
+        margin={"t": 150, "l": 20, "r": 20, "b": 130},
+        font={"color": TEXTO, "size": 13},
+        annotations=list(figura.layout.annotations) + [
+            recuadro(encabezado, 1.0 + 70 / 580, "#eef2f7"),
+            recuadro(texto_decision(por_atraso, por_estado), -0.1,
+                     "#fff4e5"),
+        ],
+        updatemenus=[{"buttons": botones, "active": 1, "x": 1, "y": 0.80,
+                      "xanchor": "right", "yanchor": "bottom",
+                      "direction": "down"}],
     )
-
-    if pedidos.empty or mensual.empty:
-        st.info("No hay pedidos entregados para mostrar.")
-        st.stop()
-
-    st.caption(
-        f"Meses de compra: {mensual['mes_compra'].min()} "
-        f"a {mensual['mes_compra'].max()}. "
-        "Importes originales, sin conversión de moneda. "
-        "El GMV excluye flete."
-    )
-
-    resumen, exploracion, calidad = st.tabs([
-        "Resumen ejecutivo",
-        "Explorar pedidos",
-        "Calidad y definiciones",
-    ])
-
-    # Esta pestaña presenta el periodo completo.
-    with resumen:
-        mostrar_indicadores(pedidos)
-
-        izquierda, derecha = st.columns(2)
-
-        with izquierda:
-            st.subheader("Evolución mensual del GMV")
-            st.line_chart(
-                mensual.set_index("mes_compra")[["gmv"]],
-                height=340,
-            )
-            st.caption(
-                "Agrupación por mes de compra. "
-                "Los meses extremos tienen cobertura parcial."
-            )
-
-        with derecha:
-            st.subheader("Categorías con mayores ventas")
-            limite = st.selectbox(
-                "Cantidad de categorías",
-                options=[5, 10, 15],
-                index=1,
-            )
-            st.altair_chart(
-                grafico_barras(
-                    categorias.head(limite),
-                    "categoria",
-                    "gmv",
-                    "GMV sin flete",
-                ),
-                width="stretch",
-            )
-
-        izquierda_2, derecha_2 = st.columns(2)
-
-        with izquierda_2:
-            st.subheader("Distribución de la satisfacción")
-            # Se redondea hacia arriba desde 0,5 para agrupar en 1 a 5.
-            puntajes = (
-                (pedidos["satisfaccion"].dropna() + 0.5)
-                .astype(int)
-                .value_counts()
-                .reindex(range(1, 6), fill_value=0)
-                .rename_axis("puntaje")
-                .reset_index(name="pedidos")
-            )
-            st.altair_chart(
-                alt.Chart(puntajes)
-                .mark_bar(color="#1E40AF")
-                .encode(
-                    x=alt.X(
-                        "puntaje:O",
-                        title="Puntaje por pedido (redondeado)",
-                        axis=alt.Axis(labelAngle=0),
-                    ),
-                    y=alt.Y("pedidos:Q", title="Pedidos con reseña"),
-                    tooltip=[
-                        alt.Tooltip("puntaje:O", title="Puntaje"),
-                        alt.Tooltip(
-                            "pedidos:Q",
-                            title="Pedidos",
-                            format=",.0f",
-                        ),
-                    ],
-                )
-                .properties(height=340),
-                width="stretch",
-            )
-            st.caption(
-                "Pedidos entregados con reseña, agrupados por puntaje "
-                "medio del pedido."
-            )
-
-        with derecha_2:
-            st.subheader("Entregas a tiempo por mes")
-            evaluables = pedidos.dropna(subset=["entrega_a_tiempo"])
-            puntualidad = evaluables.groupby("mes_compra").agg(
-                evaluables=("entrega_a_tiempo", "size"),
-                porcentaje=("entrega_a_tiempo", "mean"),
-            )
-            # Los meses con muy pocos pedidos distorsionan el porcentaje.
-            puntualidad = puntualidad.loc[puntualidad["evaluables"] >= 30]
-            puntualidad["porcentaje"] = puntualidad["porcentaje"] * 100
-            st.line_chart(puntualidad[["porcentaje"]], height=340)
-            st.caption(
-                "Porcentaje de pedidos entregados en la fecha estimada o "
-                "antes. Se omiten meses con menos de 30 pedidos evaluables."
-            )
-
-        st.subheader("Resumen mensual")
-        st.dataframe(mensual, hide_index=True)
-
-        st.download_button(
-            "Descargar resumen mensual",
-            data=mensual.to_csv(index=False).encode("utf-8-sig"),
-            file_name="resumen_mensual.csv",
-            mime="text/csv",
-        )
-
-        with st.expander("Vendedores con mayores ventas"):
-            st.dataframe(
-                vendedores[[
-                    "seller_id",
-                    "seller_state",
-                    "cantidad_pedidos",
-                    "gmv",
-                    "flete",
-                ]].head(10),
-                hide_index=True,
-            )
-            st.caption(
-                "Un pedido puede contener productos de varios vendedores. "
-                "Sus cantidades de pedidos no son aditivas."
-            )
-
-    # Los filtros de esta pestaña afectan solo a su contenido.
-    with exploracion:
-        st.subheader("Analizar pedidos por periodo y región")
-        st.caption(
-            "Los indicadores siguientes se recalculan con esta selección. "
-            "El resumen ejecutivo conserva el periodo completo."
-        )
-
-        meses = sorted(pedidos["mes_compra"].dropna().unique().tolist())
-        estados = sorted(
-            pedidos["customer_state"].dropna().unique().tolist()
-        )
-
-        inicio, fin = st.select_slider(
-            "Meses de compra",
-            options=meses,
-            value=(meses[0], meses[-1]),
-        )
-
-        estado = st.selectbox(
-            "Estado del cliente",
-            options=["Todos"] + estados,
-        )
-
-        seleccion = pedidos.loc[
-            pedidos["mes_compra"].between(inicio, fin)
-        ].copy()
-
-        if estado != "Todos":
-            seleccion = seleccion.loc[
-                seleccion["customer_state"].eq(estado)
-            ]
-
-        if seleccion.empty:
-            st.info("No hay pedidos para esta selección.")
-        else:
-            mostrar_indicadores(seleccion)
-
-            por_estado = (
-                seleccion.groupby("customer_state", as_index=False)
-                .agg(
-                    pedidos=("order_id", "nunique"),
-                    gmv=("gmv", "sum"),
-                )
-                .sort_values("gmv", ascending=False)
-            )
-
-            st.subheader("Ventas por estado del cliente")
-            st.altair_chart(
-                grafico_barras(
-                    por_estado,
-                    "customer_state",
-                    "gmv",
-                    "GMV sin flete",
-                ),
-                width="stretch",
-            )
-
-            st.dataframe(por_estado, hide_index=True)
-
-            st.download_button(
-                "Descargar selección por estado",
-                data=por_estado.to_csv(index=False).encode("utf-8-sig"),
-                file_name="ventas_por_estado.csv",
-                mime="text/csv",
-            )
-
-    with calidad:
-        st.subheader("Cobertura de los datos")
-
-        controles = pd.DataFrame({
-            "Control": [
-                "Pedidos sin reseña",
-                "Entregas no evaluables",
-                "Pedidos sin pago registrado",
-                "Pedidos sin coordenadas",
-                "Diferencias de pago superiores a un centavo",
-            ],
-            "Cantidad": [
-                int(pedidos["satisfaccion"].isna().sum()),
-                int(pedidos["entrega_a_tiempo"].isna().sum()),
-                int(pedidos["total_pagado"].isna().sum()),
-                int(pedidos["latitud"].isna().sum()),
-                int(pedidos["diferencia_pago"].abs().gt(0.01).sum()),
-            ],
-        })
-
-        st.dataframe(controles, hide_index=True)
-
-        st.subheader("Cómo se interpretan los indicadores")
-        st.markdown(
-            "- **GMV:** suma de precios de productos de pedidos entregados; "
-            "no representa utilidad.\n"
-            "- **Ticket:** GMV dividido por pedidos de la misma población.\n"
-            "- **Satisfacción:** promedio de puntuaciones medias por pedido, "
-            "excluyendo pedidos sin reseña.\n"
-            "- **Entregas a tiempo:** fecha real igual o anterior al día "
-            "estimado, entre pedidos con fechas evaluables.\n"
-            "- **Categorías:** se conservan productos sin categoría "
-            "bajo el grupo `sin_categoria`.\n"
-            "- **Geografía:** coordenadas aproximadas por prefijo postal.\n"
-            "- **Pagos:** una diferencia requiere investigación; "
-            "no demuestra por sí sola fraude."
-        )
-
-
-if __name__ == "__main__":
-    main()
+    figura.update_traces(textposition="outside", selector={"type": "bar"})
+    ruta = carpeta + "dashboard.html"
+    figura.write_html(ruta, include_plotlyjs=True,
+                      config={"displayModeBar": False})
+    logging.info("Dashboard interactivo guardado: %s", ruta)
+    return ruta
