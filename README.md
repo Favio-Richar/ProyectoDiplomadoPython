@@ -1,46 +1,87 @@
+<div align="center">
+
 # Dashboard 360 de Olist
+
+**Pipeline de datos en Python que responde: ¿cómo va el negocio y dónde conviene actuar primero?**
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![pandas](https://img.shields.io/badge/pandas-3.1.0-150458?logo=pandas&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-dashboard%20interactivo-3F4F75?logo=plotly&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-carga-003B57?logo=sqlite&logoColor=white)
+![pytest](https://img.shields.io/badge/pytest-22%20pruebas%20OK-0A9EDC?logo=pytest&logoColor=white)
+![Comando](https://img.shields.io/badge/ejecuci%C3%B3n-un%20solo%20comando-2EA44F)
+
+[![Documentación completa](https://img.shields.io/badge/%F0%9F%93%98%20Documentaci%C3%B3n%20completa-Dashboard360%2FREADME.md-1F6FEB?style=for-the-badge)](Dashboard360/README.md)
+
+</div>
+
+---
 
 Proyecto integrador del curso **DPL1046: Programación en Python y Manipulación de Datos**, Diplomado en Ingeniería de Datos con Python, Universidad de las Américas (UDLA). Profesor: PhD. Juan Manuel Rozas.
 
-**Tema 10:** Dashboard 360 del negocio. **Integrantes:** Favio Jimenez B · Roberto Muñoz Velasco.
+**Tema 10:** Dashboard 360 del negocio · **Integrantes:** Favio Jimenez B · Roberto Muñoz Velasco
 
-Un pipeline de datos en Python que corre en local con un solo comando. Lee las nueve tablas del conjunto de datos de Olist (marketplace de Brasil), las valida, calcula cinco indicadores ejecutivos, guarda los resultados en SQLite y los muestra en un dashboard de Streamlit.
+## Qué hace
 
-> **Documentación completa del proyecto:** [`Dashboard360/README.md`](Dashboard360/README.md)
+Un solo comando (`python pipeline.py`) lee seis tablas del conjunto de datos de Olist (marketplace de Brasil) y una API del dólar, las valida, calcula los indicadores del negocio, guarda los resultados en SQLite y CSV, y genera un **dashboard interactivo** (`salida/dashboard.html`) que se abre solo en el navegador.
+
+```mermaid
+flowchart LR
+    A[("6 CSV de Olist<br/>+ API del dólar")] --> B["1 · Extraer<br/>validar tablas<br/>try/except + logging"]
+    B --> C["2 · Transformar<br/>merge + groupby<br/>6 funciones"]
+    C --> D["3 · Cargar<br/>SQLite + CSV<br/>sin duplicar filas"]
+    D --> E["Dashboard<br/>interactivo<br/>(HTML)"]
+    style A fill:#EEF1F6,stroke:#9AA5B8,color:#1F2937
+    style B fill:#DCEBFA,stroke:#2B6CB0,color:#1F2937
+    style C fill:#DCEBFA,stroke:#2B6CB0,color:#1F2937
+    style D fill:#DCEBFA,stroke:#2B6CB0,color:#1F2937
+    style E fill:#FFF1E0,stroke:#DD8A2B,color:#1F2937
+```
 
 ## Resultados
 
 | Indicador | Resultado |
 |---|---:|
-| Pedidos entregados | 96.478 de 99.441 (97,02 %) |
-| GMV (precios de productos, sin flete) | 13.221.498,11 |
-| Ticket promedio | 137,04 |
-| Satisfacción promedio | 4,16 de 5 |
-| Entregas a tiempo | 93,23 % |
+| 📦 Pedidos entregados | **96.478** de 99.441 (97,02 %) |
+| 💰 Ventas (precio de productos, sin flete) | **13.221.498,11 BRL** |
+| 🧾 Ticket promedio | **137,04 BRL** |
+| ⭐ Satisfacción promedio | **4,16** de 5 |
+| 🚚 Entregas a tiempo | **93,23 %** |
 
-Los importes están en la moneda original de los datos, sin conversión.
+### 1 · Las categorías que más venden
 
-## Vista del dashboard
+| Categoría | Ventas (BRL) | |
+|---|---:|:---|
+| `health_beauty` | 1.233.132 | `█████████████████` |
+| `watches_gifts` | 1.166.177 | `█████████████████░` |
+| `bed_bath_table` | 1.023.435 | `█████████████████░░░` |
+| `sports_leisure` | 954.853 | `████████████████░░░░░` |
+| `computers_accessories` | 888.725 | `█████████████░░░░░░` |
 
-Resumen ejecutivo:
+### 2 · Más atraso en la entrega, más baja la nota
 
-![Resumen ejecutivo del dashboard](Dashboard360/docs/presentacion/capturas/dashboard_resumen.png)
+| Atraso en la entrega | Nota promedio | |
+|---|---:|:---|
+| A tiempo | 4,29 | `████████████████░░░` |
+| 1 a 3 días | 3,29 | `█████████████░░░░░░░` |
+| 4 a 10 días | 1,97 | `████████░░░░░░░░░░░░` |
+| Más de 10 días | 1,71 | `███████░░░░░░░░░░░░░` |
 
-Exploración por periodo y estado del cliente:
+### 3 · Estados con peor puntualidad
 
-![Exploración de pedidos](Dashboard360/docs/presentacion/capturas/dashboard_explorar.png)
+| Estado | Entregas a tiempo | |
+|---|---:|:---|
+| AL | 78,59 % | `████████████████░░░░` |
+| MA | 82,57 % | `█████████████████░░░` |
+| SE | 84,78 % | `█████████████████░░░` |
+| PI | 86,13 % | `█████████████████░░░` |
+| CE | 86,24 % | `█████████████████░░░` |
 
-Calidad de los datos y definiciones:
-
-![Calidad y definiciones](Dashboard360/docs/presentacion/capturas/dashboard_calidad.png)
-
-## Tecnologías
-
-Python 3.12 · pandas · SQLite · Streamlit y Altair · pytest · logging
+> **Decisión que permite:** atacar primero los atrasos de más de 10 días (la nota baja de 4,29 a 1,71) y revisar la logística en **AL, MA y SE**, los estados con peor puntualidad.
 
 ## Cómo ejecutarlo
 
-Los comandos se ejecutan en Git Bash. Los nueve CSV originales del curso no están en el repositorio: se colocan en `Dashboard360/data/raw/`.
+Los comandos se ejecutan en Git Bash. Los CSV originales del curso no están en el repositorio: se colocan en `Dashboard360/data/raw/`.
 
 ```bash
 git clone https://github.com/Favio-Richar/ProyectoDiplomadoPython.git   # descarga el repositorio
@@ -48,11 +89,18 @@ cd ProyectoDiplomadoPython/Dashboard360                  # entra a la carpeta de
 py -3.12 -m venv .venv                                   # crea el entorno virtual
 source .venv/Scripts/activate                            # activa el entorno
 python -m pip install -r requirements.txt                # instala las dependencias
-mkdir -p data/raw                                        # crea la carpeta de datos (luego copia los 9 CSV)
+cp .env.example .env                                     # crea la configuración local (URL de la API)
+mkdir -p data/raw                                        # crea la carpeta de datos (luego copia los CSV)
 python pipeline.py                                       # ejecuta el pipeline completo
-python -m pytest -v                                      # ejecuta las 9 pruebas
-python -m streamlit run dashboard.py                     # abre el dashboard en el navegador
+pytest -v                                                # ejecuta las 22 pruebas
 ```
+
+## Calidad del código
+
+- ✅ **22 pruebas con pytest**, al menos 3 por cada función de transformación.
+- ✅ **Validación y manejo de errores:** `try/except` y registro con `logging`.
+- ✅ **Idempotente:** ejecutarlo dos veces da el mismo resultado, sin duplicar filas.
+- ✅ **Sin claves en el código:** la configuración va en `.env`, que no se sube a git.
 
 ## Actualizar el repositorio
 
@@ -69,5 +117,5 @@ git push                      # sube los cambios a GitHub
 ```text
 ProyectoDiplomadoPython/
 ├── README.md          Este archivo
-└── Dashboard360/      Proyecto completo: código, pruebas, documentación y README detallado
+└── Dashboard360/      Proyecto completo: código, pruebas y README detallado
 ```
